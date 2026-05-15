@@ -293,8 +293,8 @@ class DataManager:
 if __name__ == "__main__":
     dm = DataManager(
         save_path="../data",
-        qlib_export_path="/home/liuyu/.qlib/AlphaGen_qlib_data/qlib_data/cn_data_rolling/",
-        qlib_base_data_path="/home/liuyu/.qlib/AlphaGen_qlib_data/qlib_data/cn_data_rolling/",
+        qlib_export_path="./qlib_data/cn_data_rolling/",
+        qlib_base_data_path="./qlib_data/cn_data_rolling/",
         adjust_date="2009-01-01"
     )
     dm.fetch_and_save_data()

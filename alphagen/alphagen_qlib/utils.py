@@ -1,10 +1,8 @@
 import datetime
 import json
-from typing import List, Tuple
 from alphagen.data.expression import *
-from alphagen_generic.features import *
 
-from alphagen_qlib.stock_data import StockData
+from alphagen.alphagen_qlib.stock_data import StockData
 from alphagen.data.parser import ExpressionParser
 
 

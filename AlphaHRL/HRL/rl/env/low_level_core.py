@@ -395,15 +395,18 @@ class LowLevelEnvCore(gym.Env):
         if event == "final_max_length" and not self._builder.is_valid():
             title = f"{title} INVALID"
 
+        reward_items = [
+            ("total", reward),
+            ("task", task_reward),
+            ("novelty", novelty_info["novelty_reward"]),
+        ]
+        if bool(redundancy_info.get("redundancy_evaluated", False)):
+            reward_items.append(("redundancy", -redundancy_info["redundancy_penalty"]))
+        reward_items.append(("proxy", proxy_info["proxy_reward"]))
+
         lines = [
             f"expr    : {expr_repr}",
-            "reward  : " + format_kv_pairs([
-                ("total", reward),
-                ("task", task_reward),
-                ("novelty", novelty_info["novelty_reward"]),
-                ("redundancy", -redundancy_info["redundancy_penalty"]),
-                ("proxy", proxy_info["proxy_reward"]),
-            ]),
+            "reward  : " + format_kv_pairs(reward_items),
         ]
 
         if bool(novelty_info.get("novelty_evaluated", False)):

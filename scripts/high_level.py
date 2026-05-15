@@ -591,6 +591,31 @@ def summarize_factor_pool(
     return "; ".join(lines) if lines else "<empty>"
 
 
+def build_resolved_pool_payload(
+    exprs: Sequence[Expression],
+    base_weights: Sequence[float],
+    projected_base_weights: Sequence[float],
+    action_factor_indices: Sequence[int],
+    action_factor_names: Sequence[str],
+    rebalance_interval_days: int,
+    pool_metadata: Dict[str, Any],
+) -> Dict[str, Any]:
+    payload: Dict[str, Any] = {
+        "exprs": [str(expr) for expr in exprs],
+        "weights": [float(weight) for weight in base_weights],
+        "projected_base_weights": [float(weight) for weight in projected_base_weights],
+        "action_factor_indices": [int(index) for index in action_factor_indices],
+        "action_factor_names": list(action_factor_names),
+        "rebalance_interval_days": int(rebalance_interval_days),
+    }
+    payload.update({
+        key: value
+        for key, value in pool_metadata.items()
+        if key != "selected_metrics"
+    })
+    return payload
+
+
 def format_baseline_summary(
     metrics_by_env: Sequence[Tuple[str, Dict[str, float]]],
 ) -> str:
@@ -789,7 +814,7 @@ def run_single_experiment(
     patch_sb3_human_output_for_high_level()
 
     reseed_everything(seed)
-    initialize_qlib("/home/liuyu/.qlib/AlphaGen_qlib_data/qlib_data/cn_data_rolling/")
+    initialize_qlib("./qlib_data/cn_data_rolling/")
 
     target_horizon_days = normalize_target_horizon_days(target_horizon_days)
     dataset_future_days = resolve_dataset_future_days(target_horizon_days)
@@ -923,15 +948,15 @@ def run_single_experiment(
         "test_3": HighLevelEnv(exprs, calculators[3], base_weights, eval_config),
     }
 
-    resolved_pool_payload: Dict[str, Any] = {
-        "exprs": [str(expr) for expr in exprs],
-        "weights": [float(weight) for weight in base_weights],
-        "projected_base_weights": train_env.base_weights.tolist(),
-        "action_factor_indices": train_env.action_factor_indices,
-        "action_factor_names": train_env.action_factor_names,
-        "rebalance_interval_days": train_env.rebalance_interval_days,
-    }
-    resolved_pool_payload.update(pool_metadata)
+    resolved_pool_payload = build_resolved_pool_payload(
+        exprs=exprs,
+        base_weights=base_weights,
+        projected_base_weights=train_env.base_weights.tolist(),
+        action_factor_indices=train_env.action_factor_indices,
+        action_factor_names=train_env.action_factor_names,
+        rebalance_interval_days=train_env.rebalance_interval_days,
+        pool_metadata=pool_metadata,
+    )
     with open(os.path.join(save_path, "resolved_pool.json"), "w", encoding="utf-8") as f:
         json.dump(resolved_pool_payload, f, ensure_ascii=False, indent=2)
 
@@ -987,9 +1012,9 @@ def main(
     random_seeds: Union[int, Tuple[int, ...]] = (0,),
     instruments: str = "csi300",
     pool_path: Optional[str] = None,
-    low_level_result_dir: Optional[str] = "/home/liuyu/AlphaHRL/out/results/low_level/csi300_20_0_20260331182039_rl_pxd_tnh",
+    low_level_result_dir: Optional[str] = "./out/results/low_level/csi300_20_0_20260503112552_rl_pxd_tnh",
     pool_selection_metric: str = "ic",
-    steps: int = 220_000,
+    steps: int = 86_000,
     lookback_days: int = 20,
     episode_days: int = 256,
     target_horizon_days: int = 20,
@@ -1011,7 +1036,7 @@ def main(
     policy_n_layers: int = 2,
     policy_dropout: float = 0.1,
     policy_log_std_init: float = -2.0,
-    device_str: str = "cuda:4",
+    device_str: str = "cuda:0",
 ):
     if isinstance(random_seeds, int):
         random_seeds = (random_seeds,)

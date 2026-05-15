@@ -3,7 +3,7 @@ import math
 import os
 from pathlib import Path
 import sys
-# 添加项目根目录到 Python 路径
+
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
@@ -70,6 +70,92 @@ def build_chat_client(log_dir: str) -> ChatClient:
             logger=logger
         )
     )
+
+
+def build_low_level_run_name(
+    instruments: str,
+    pool_capacity: int,
+    seed: int,
+    timestamp: str,
+    tag: str,
+    use_subtree_proxy_reward: bool,
+    subtree_reward_mode: str,
+    use_terminal_novelty_reward: bool,
+    terminal_novelty_comparison_mode: str,
+    use_terminal_redundancy_penalty: bool,
+    terminal_redundancy_comparison_mode: str,
+) -> str:
+    proxy_tag = (
+        "px0" if not use_subtree_proxy_reward else
+        "pxs" if subtree_reward_mode == "shaping" else
+        "pxd"
+    )
+    terminal_novelty_tag = (
+        "tn0" if not use_terminal_novelty_reward else
+        "tnp" if terminal_novelty_comparison_mode == "pool" else
+        "tnh"
+    )
+
+    tags = [proxy_tag, terminal_novelty_tag]
+    if use_terminal_redundancy_penalty:
+        redundancy_tag = (
+            "rdp" if terminal_redundancy_comparison_mode == "pool" else
+            "rdh"
+        )
+        tags.append(redundancy_tag)
+
+    return (
+        f"{instruments}_{pool_capacity}_{seed}_{timestamp}_{tag}_"
+        + "_".join(tags)
+    )
+
+
+def build_low_level_training_summary_lines(
+    *,
+    name_prefix: str,
+    start_time: str,
+    seed: int,
+    instruments: str,
+    steps: int,
+    pool_capacity: int,
+    use_llm: bool,
+    alphagpt_init: bool,
+    llm_every_n_steps: int,
+    llm_replace_n: int,
+    drop_rl_n: int,
+    use_subtree_proxy_reward: bool,
+    subtree_reward_mode: str,
+    subtree_proxy_days: int,
+    subtree_validity_reward: float,
+    subtree_stability_reward: float,
+    subtree_stable_ratio_threshold: float,
+    use_terminal_novelty_reward: bool,
+    terminal_novelty_reward_scale: float,
+    terminal_novelty_depth_decay: float,
+    terminal_novelty_comparison_mode: str,
+    use_terminal_redundancy_penalty: bool,
+    terminal_redundancy_penalty_scale: float,
+    terminal_redundancy_depth_decay: float,
+    terminal_redundancy_comparison_mode: str,
+    save_path: str,
+) -> List[str]:
+    lines = [
+        f"run     : {name_prefix}",
+        f"start   : {start_time}",
+        f"seed    : {seed}",
+        f"market  : {instruments}",
+        f"steps   : {steps}",
+        f"pool    : {pool_capacity}",
+        f"llm     : enabled={use_llm} | init_only={alphagpt_init} | every={llm_every_n_steps} | replace={llm_replace_n} | drop={drop_rl_n}",
+        f"proxy   : enabled={use_subtree_proxy_reward} | mode={subtree_reward_mode} | days={subtree_proxy_days} | validity={subtree_validity_reward:.4f} | stability={subtree_stability_reward:.4f} | threshold={subtree_stable_ratio_threshold:.4f}",
+        f"novelty : enabled={use_terminal_novelty_reward} | scale={terminal_novelty_reward_scale:.4f} | decay={terminal_novelty_depth_decay:.4f} | mode={terminal_novelty_comparison_mode}",
+    ]
+    if use_terminal_redundancy_penalty:
+        lines.append(
+            f"redund. : enabled={use_terminal_redundancy_penalty} | scale={terminal_redundancy_penalty_scale:.4f} | metric=mutual_ic | mode={terminal_redundancy_comparison_mode} | legacy_decay={terminal_redundancy_depth_decay:.4f}"
+        )
+    lines.append(f"output  : {save_path}")
+    return lines
 
 
 class CustomCallback(BaseCallback):
@@ -430,7 +516,7 @@ def run_single_experiment(
         )
 
     reseed_everything(seed)
-    initialize_qlib("/home/liuyu/.qlib/AlphaGen_qlib_data/qlib_data/cn_data_rolling/")
+    initialize_qlib("./qlib_data/cn_data_rolling/")
 
     llm_replace_n = 0 if not use_llm else llm_replace_n
     timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
@@ -440,43 +526,52 @@ def run_single_experiment(
         "agpt" if alphagpt_init else
         "rl" if not use_llm else
         f"llm_d{drop_rl_n}")
-    proxy_tag = (
-        "px0" if not use_subtree_proxy_reward else
-        "pxs" if subtree_reward_mode == "shaping" else
-        "pxd"
-    )
-    terminal_novelty_tag = (
-        "tn0" if not use_terminal_novelty_reward else
-        "tnp" if terminal_novelty_comparison_mode == "pool" else
-        "tnh"
-    )
-    terminal_redundancy_tag = (
-        "rd0" if not use_terminal_redundancy_penalty else
-        "rdp" if terminal_redundancy_comparison_mode == "pool" else
-        "rdh"
-    )
-    name_prefix = (
-        f"{instruments}_{pool_capacity}_{seed}_{timestamp}_{tag}_"
-        f"{proxy_tag}_{terminal_novelty_tag}_{terminal_redundancy_tag}"
+    name_prefix = build_low_level_run_name(
+        instruments=instruments,
+        pool_capacity=pool_capacity,
+        seed=seed,
+        timestamp=timestamp,
+        tag=tag,
+        use_subtree_proxy_reward=use_subtree_proxy_reward,
+        subtree_reward_mode=subtree_reward_mode,
+        use_terminal_novelty_reward=use_terminal_novelty_reward,
+        terminal_novelty_comparison_mode=terminal_novelty_comparison_mode,
+        use_terminal_redundancy_penalty=use_terminal_redundancy_penalty,
+        terminal_redundancy_comparison_mode=terminal_redundancy_comparison_mode,
     )
     save_path = os.path.join("./out/results/low_level", name_prefix)
     os.makedirs(save_path, exist_ok=True)
 
     print(format_block(
         "[Low-Level Training]",
-        [
-            f"run     : {name_prefix}",
-            f"start   : {start_time}",
-            f"seed    : {seed}",
-            f"market  : {instruments}",
-            f"steps   : {steps}",
-            f"pool    : {pool_capacity}",
-            f"llm     : enabled={use_llm} | init_only={alphagpt_init} | every={llm_every_n_steps} | replace={llm_replace_n} | drop={drop_rl_n}",
-            f"proxy   : enabled={use_subtree_proxy_reward} | mode={subtree_reward_mode} | days={subtree_proxy_days} | validity={subtree_validity_reward:.4f} | stability={subtree_stability_reward:.4f} | threshold={subtree_stable_ratio_threshold:.4f}",
-            f"novelty : enabled={use_terminal_novelty_reward} | scale={terminal_novelty_reward_scale:.4f} | decay={terminal_novelty_depth_decay:.4f} | mode={terminal_novelty_comparison_mode}",
-            f"redund. : enabled={use_terminal_redundancy_penalty} | scale={terminal_redundancy_penalty_scale:.4f} | metric=mutual_ic | mode={terminal_redundancy_comparison_mode} | legacy_decay={terminal_redundancy_depth_decay:.4f}",
-            f"output  : {save_path}",
-        ],
+        build_low_level_training_summary_lines(
+            name_prefix=name_prefix,
+            start_time=start_time,
+            seed=seed,
+            instruments=instruments,
+            steps=steps,
+            pool_capacity=pool_capacity,
+            use_llm=use_llm,
+            alphagpt_init=alphagpt_init,
+            llm_every_n_steps=llm_every_n_steps,
+            llm_replace_n=llm_replace_n,
+            drop_rl_n=drop_rl_n,
+            use_subtree_proxy_reward=use_subtree_proxy_reward,
+            subtree_reward_mode=subtree_reward_mode,
+            subtree_proxy_days=subtree_proxy_days,
+            subtree_validity_reward=subtree_validity_reward,
+            subtree_stability_reward=subtree_stability_reward,
+            subtree_stable_ratio_threshold=subtree_stable_ratio_threshold,
+            use_terminal_novelty_reward=use_terminal_novelty_reward,
+            terminal_novelty_reward_scale=terminal_novelty_reward_scale,
+            terminal_novelty_depth_decay=terminal_novelty_depth_decay,
+            terminal_novelty_comparison_mode=terminal_novelty_comparison_mode,
+            use_terminal_redundancy_penalty=use_terminal_redundancy_penalty,
+            terminal_redundancy_penalty_scale=terminal_redundancy_penalty_scale,
+            terminal_redundancy_depth_decay=terminal_redundancy_depth_decay,
+            terminal_redundancy_comparison_mode=terminal_redundancy_comparison_mode,
+            save_path=save_path,
+        ),
         width=96,
         border_char="="
     ))
@@ -604,10 +699,6 @@ def main(
     terminal_novelty_reward_scale: float = 0.01,
     terminal_novelty_depth_decay: float = 0.8,
     terminal_novelty_comparison_mode: str = "history",
-    use_terminal_redundancy_penalty: bool = True,
-    terminal_redundancy_penalty_scale: float = 0.01,
-    terminal_redundancy_depth_decay: float = 0.8,
-    terminal_redundancy_comparison_mode: str = "pool",
 ):
     """
     :param random_seeds: Random seeds
@@ -628,10 +719,6 @@ def main(
     :param terminal_novelty_reward_scale: Maximum reward assigned by terminal novelty
     :param terminal_novelty_depth_decay: Depth decay used by the structural formula embedding
     :param terminal_novelty_comparison_mode: "pool" compares to retained pool formulas, "history" compares to all historical completed formulas
-    :param use_terminal_redundancy_penalty: Enable redundancy penalty on completed expressions
-    :param terminal_redundancy_penalty_scale: Maximum penalty assigned by terminal redundancy
-    :param terminal_redundancy_depth_decay: Deprecated compatibility knob; ignored by semantic mutual-IC redundancy
-    :param terminal_redundancy_comparison_mode: "pool" compares to retained pool factors, "history" compares to all historical completed factors
     """
     if isinstance(random_seeds, int):
         random_seeds = (random_seeds, )
@@ -661,10 +748,6 @@ def main(
             terminal_novelty_reward_scale=terminal_novelty_reward_scale,
             terminal_novelty_depth_decay=terminal_novelty_depth_decay,
             terminal_novelty_comparison_mode=terminal_novelty_comparison_mode,
-            use_terminal_redundancy_penalty=use_terminal_redundancy_penalty,
-            terminal_redundancy_penalty_scale=terminal_redundancy_penalty_scale,
-            terminal_redundancy_depth_decay=terminal_redundancy_depth_decay,
-            terminal_redundancy_comparison_mode=terminal_redundancy_comparison_mode,
         )
 
 

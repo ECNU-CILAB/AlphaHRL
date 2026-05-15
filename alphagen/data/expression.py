@@ -4,7 +4,7 @@ from typing import List, Type, Union, Tuple
 import torch
 from torch import Tensor
 from alphagen.utils.maybe import Maybe, some, none
-from alphagen_qlib.stock_data import StockData, FeatureType
+from alphagen.alphagen_qlib import StockData, FeatureType
 
 
 _ExprOrFloat = Union["Expression", float]

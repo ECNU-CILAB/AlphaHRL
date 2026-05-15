@@ -1,5 +1,5 @@
 from alphagen.data.expression import Feature, Ref
-from alphagen_qlib.stock_data import FeatureType
+from alphagen.alphagen_qlib.stock_data import FeatureType
 
 
 high = High = HIGH = Feature(FeatureType.HIGH)

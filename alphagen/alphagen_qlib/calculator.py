@@ -3,7 +3,7 @@ from torch import Tensor
 from alphagen.data.calculator import TensorAlphaCalculator
 from alphagen.data.expression import Expression
 from alphagen.utils.pytorch_utils import normalize_by_day
-from alphagen_qlib.stock_data import StockData
+from alphagen.alphagen_qlib.stock_data import StockData
 
 
 class QLibStockDataCalculator(TensorAlphaCalculator):

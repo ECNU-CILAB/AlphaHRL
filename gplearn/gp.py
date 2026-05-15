@@ -8,10 +8,10 @@ import numpy as np
 from alphagen.data.expression import *
 from alphagen.models.linear_alpha_pool import MseAlphaPool
 from alphagen.utils.random import reseed_everything
-from alphagen_generic.operators import funcs as generic_funcs
-from alphagen_generic.features import *
-from alphagen_qlib.calculator import QLibStockDataCalculator
-from alphagen_qlib.stock_data import initialize_qlib
+from alphagen.alphagen_generic.operators import funcs as generic_funcs
+from alphagen.alphagen_generic.features import *
+from alphagen.alphagen_qlib.calculator import QLibStockDataCalculator
+from alphagen.alphagen_qlib import initialize_qlib
 from gplearn.fitness import make_fitness
 from gplearn.functions import make_function
 from gplearn.genetic import SymbolicRegressor

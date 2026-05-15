@@ -1,4 +1,4 @@
-from typing import List, Optional, Dict, Tuple
+from typing import Optional, Dict
 from dataclasses import dataclass
 import json
 from logging import Logger
@@ -8,11 +8,9 @@ import fire
 
 from alphagen.data.expression import *
 from alphagen.data.parser import ExpressionParser
-from alphagen_llm.client import ChatClient, OpenAIClient, ChatConfig
-from alphagen_llm.prompts.common import safe_parse
+from alphagen.alphagen_llm import ChatClient, OpenAIClient, ChatConfig
+from alphagen.alphagen_llm import safe_parse
 from alphagen.utils import get_logger
-from alphagen_llm.prompts.system_prompt import *
-
 
 _GENERATE_ALPHAS_DEFAULT_PROMPT = "Generate me ten alphas that you think would be indicative of future stock price trend. Each alpha should be on its own line without numbering. Please do not output anything else."
 

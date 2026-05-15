@@ -1,6 +1,6 @@
 from enum import IntEnum
 from typing import Type
-from alphagen_qlib.stock_data import FeatureType
+from alphagen.alphagen_qlib import FeatureType
 from alphagen.data.expression import Operator, Expression
 
 
