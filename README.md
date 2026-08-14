@@ -2,6 +2,12 @@
 
 The codebase focuses on hierarchical reinforcement learning for quantitative factor discovery.
 
+## Framework
+
+AlphaHRL uses a hierarchical reinforcement learning framework that first discovers symbolic alpha factors and then allocates over the resulting factor pool. The overall architecture is shown below.
+
+[![AlphaHRL framework](picture/framework.png)](picture/framework.pdf)
+
 ## Contents
 
 - Low-level policy for generating and selecting symbolic alpha factors
@@ -177,3 +183,8 @@ The following methods can be reproduced by referring to the author's code reposi
 ## Existing Artifacts
 
 The repository may already contain logs, figures, intermediate checkpoints, or cached outputs under `out/` and `data/`. These files are included only as examples or cached artifacts. They are not required for understanding the code structure, and experiments can be rerun from scratch following the steps above.
+
+## License
+
+This project adheres to [MIT License](https://lbesson.mit-license.org/).
+
