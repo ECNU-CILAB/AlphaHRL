@@ -1,5 +1,7 @@
 # AlphaHRL
 
+🎉 **Congratulations! Our paper has been accepted by CIKM 2026!**
+
 The codebase focuses on hierarchical reinforcement learning for quantitative factor discovery.
 
 ## Framework
@@ -187,4 +189,3 @@ The repository may already contain logs, figures, intermediate checkpoints, or c
 ## License
 
 This project adheres to [MIT License](https://lbesson.mit-license.org/).
-
